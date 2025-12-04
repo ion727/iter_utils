@@ -10,7 +10,7 @@ def clamp(iterable, index):
 def is_iterable(obj, include_string=False):
     "Returns True if obj is an iterable, optionally accepting strings (rejected by default)"
     is_string = isinstance(obj, (str, bytes, bytearray)) 
-    return (isinstance(obj, Iterable) and (not is_string or include_string))
+    return (isinstance(obj, Iterable) and not (is_string and include_string))
 
 def deep_max(iterable, index=0, dtype=int):
     "Walks through iterable tree to find the highest value of type `dtype`, defaulting to <int>."
@@ -83,6 +83,7 @@ def get_attributes(obj):
                 attrs[attr] = getattr(obj, attr)
 
     return attrs
+<<<<<<< HEAD
 
 def BFS_index(iterable, target, start=0, end=None, *, exclude=None):
     "Walks through iterable tree (including dicts and strings if target is 1 char) to find the first index of target value using breadth-first search. "
@@ -232,3 +233,5 @@ def DFS_index(iterable, target, start=0, end=None, *, exclude=None):
         return result
     
     raise ValueError(f"Value {target} not found in iterable.")
+=======
+>>>>>>> c64174f (old update)
