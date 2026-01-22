@@ -1,4 +1,7 @@
-from .utils import clamp
+try:
+    from .utils import clamp
+except ImportError:
+    from utils import clamp
 from inspect import getsource
 
 class SearchObject:

@@ -1,5 +1,9 @@
-from .algorithms import *
-from .utils import *
+try:
+    from .algorithms import *
+    from .utils import *
+except ImportError:
+    from algorithms import *
+    from utils import *
 import dis
 import types
 
@@ -23,7 +27,12 @@ class iu_lambda:
         return f"<class iu_lambda({self._for_eval}) at {hex(id(self))}>"
 
     def __call__(self, *args, **kwargs):
-        return self.key(*args, **kwargs)
+        return self._key(*args, **kwargs)
+    
+    @property
+    def key(self):
+        """Returns the actual callable lambda function"""
+        return self._key
 
     def from_lambda(key, verbose=True):
         instructions = list(dis.get_instructions(key))
@@ -45,6 +54,8 @@ class iu_lambda:
                 match instr.opname:
                     case "RESUME":
                         continue
+                    case "COPY_FREE_VARS":
+                        continue
                     case "LOAD_CONST":
                         STACK.append(str(instr.argval))
                         if verbose: print(f"Loaded {instr.argval} to STACK")
@@ -55,11 +66,29 @@ class iu_lambda:
                             VAR_NAMES.append(str(var))
                         TOTAL_VARS_LOADED += 1
                         if verbose: print(f"Loaded {var} to STACK")
+                    case "LOAD_DEREF":
+                        STACK.append(f"deref_{instr.argval}")
+                        TOTAL_VARS_LOADED += 1
                     case "UNARY_INVERT":
                         STACK[-1] = "~"+STACK[-1]
+                    case "UNARY_NEGATIVE":
+                        STACK[-1] = "-"+STACK[-1]
+                    case "UNARY_NOT":
+                        STACK[-1] = "not "+STACK[-1]
                     case "BINARY_SUBSCR":
                         STACK[-2] = f"{STACK[-2]}[{STACK[-1]}]"
                         index_path.append(STACK.pop(-1))
+                    case "COMPARE_OP":
+                        cmp_ops = ['<', '<=', '==', '!=', '>', '>=', 'in', 'not in', 'is', 'is not', 'exception match', 'BAD']
+                        op = cmp_ops[instr.arg] if instr.arg < len(cmp_ops) else 'UNKNOWN'
+                        STACK[-2] = f"({STACK[-2]} {op} {STACK[-1]})"
+                        STACK.pop(-1)
+                    case "POP_TOP":
+                        STACK.pop()
+                    case "DUP_TOP":
+                        STACK.append(STACK[-1])
+                    case "ROT_TWO":
+                        STACK[-1], STACK[-2] = STACK[-2], STACK[-1]
                     case "LOAD_GLOBAL":
                         LOADED_GLOBALS_STACK.append(instr.argval)
                         if verbose: print(f"loaded global variable '{str(instr.argval)}'")
@@ -79,20 +108,24 @@ class iu_lambda:
                         if instr.opname.startswith("BINARY_"):
                             #strip off "BINARY_"
                             opname = instr.opname[7:]
-                            symbol_code = instr.argval
-                            # if older command, find matching symbol for name
-                            opnames = ("ADD", "AND", "FLOOR_DIVIDE", "LSHIFT", "MATRIX_MULTIPLY", "MULTIPLY", "MODULO", "OR", "POWER", "RSHIFT", "SUBTRACT", "TRUE_DIVIDE", "XOR")
-                            operators = ('+', '&', '//', '<<', '@', '*', '%', '|', '**', '>>', '-', '/', '^')
-                            ops = dict(zip(opnames,operators))
+                            # For Python 3.11+, BINARY_OP uses instr.arg (not instr.argval)
+                            # Map arg to operator
+                            ops_3_11 = {0: '+', 1: '&', 2: '//', 3: '<<', 4: '@', 5: '*', 6: '%', 7: '|', 8: '**', 9: '>>', 10: '-', 11: '/', 12: '^'}
                             
-                            if opname != "OP":
-                                symbol_code = ops.get(opname)
-                                if symbol_code is None:
+                            if opname == "OP":
+                                symbol_code = ops_3_11.get(instr.arg, '?')
+                            else:
+                                # Older Python style - map opname to operator
+                                opnames = ("ADD", "AND", "FLOOR_DIVIDE", "LSHIFT", "MATRIX_MULTIPLY", "MULTIPLY", "MODULO", "OR", "POWER", "RSHIFT", "SUBTRACT", "TRUE_DIVIDE", "XOR")
+                                operators = ('+', '&', '//', '<<', '@', '*', '%', '|', '**', '>>', '-', '/', '^')
+                                ops = dict(zip(opnames,operators))
+                                symbol_code = ops.get(opname, '?')
+                                if symbol_code == '?':
                                      raise ValueError(f"Unable to find binary operation {instr.opname}")
 
-                            if verbose: print(f"Operation completed: {STACK[-2]}{operators[symbol_code]}{STACK[-1]}")
-                            STACK[-2] += operators[symbol_code]+STACK.pop(-1)
-
+                            right = STACK.pop(-1)
+                            if verbose: print(f"Operation completed: {STACK[-1]}{symbol_code}{right}")
+                            STACK[-1] = STACK[-1] + symbol_code + right
 
                         elif instr.opname.startswith("BUILD_"):
                             if instr.opname.endswith("_EXTEND"):

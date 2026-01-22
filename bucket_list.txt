@@ -7,3 +7,5 @@ remove `self` from algorithms
 
 
 BUILD_TUPLE and other data types
+
+Add save/load/revert functionality for iu_list versions (store list snapshots in history)
