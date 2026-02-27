@@ -30,7 +30,7 @@ SearchObject(iterable={self.iterable},
 
 def is_sorted(self, i=..., *, reverse=None, key=None):
     if not callable(key):
-        key = self._key.key
+        key = self._key
     # check surrounding the index (i) to ensure they are still sorted
     if reverse is None:
          reverse = self.is_reversed
@@ -98,7 +98,7 @@ def binary_search(self, target, *, reverse=None, key=None, override_sorted=False
 
     # retrieve the sorting key
     if not callable(key):
-        key = self._key.key
+        key = self._key
     rkey = lambda x: rev*key(x)
 
     # return error if list is not sorted
