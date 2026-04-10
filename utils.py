@@ -83,7 +83,6 @@ def get_attributes(obj):
                 attrs[attr] = getattr(obj, attr)
 
     return attrs
-<<<<<<< HEAD
 
 def BFS_index(iterable, target, start=0, end=None, *, exclude=None):
     "Walks through iterable tree (including dicts and strings if target is 1 char) to find the first index of target value using breadth-first search. "
@@ -233,5 +232,3 @@ def DFS_index(iterable, target, start=0, end=None, *, exclude=None):
         return result
     
     raise ValueError(f"Value {target} not found in iterable.")
-=======
->>>>>>> c64174f (old update)

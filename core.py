@@ -16,11 +16,7 @@ class iu_lambda:
                 setattr(self, attr, value)
         else:
             is_lambda = isinstance(key, types.LambdaType) and key.__name__ == "<lambda>"
-<<<<<<< HEAD
             formula, index_path, vars_, total_load_calls = iu_lambda.decompile_lambda(key,verbose=False) if is_lambda else (None, None, None, None)
-=======
-            formula, index_path, vars_, total_load_calls = iu_lambda.decompile_lambda(key) if is_lambda else (None, None, None, None)
->>>>>>> c64174f (old update)
             if any(arg is None for arg in (formula, index_path, vars_, total_load_calls)):
                 raise ValueError("Invalid arguments for custom iu_lambda")
             self._for_eval = f"lambda {','.join(vars_)}: {formula}"
@@ -30,7 +26,6 @@ class iu_lambda:
             self.total_load_calls = total_load_calls 
             self._key = eval(self._for_eval)
             
-<<<<<<< HEAD
             self.can_assign_to_path = False
             self.can_get_from_path = False
 
@@ -39,15 +34,6 @@ class iu_lambda:
                 if total_load_calls == 1:
                     self.can_assign_to_path = True
 
-=======
-            # Validate index_path
-            # Must have a single variable
-            # x can only be referred to as a duplicate
-            if len(self.vars_) > 1:
-                self.index_path=None
-
-        
->>>>>>> c64174f (old update)
     def __repr__(self):
         return f"iu_lambda(key={self._for_eval})"
 
@@ -56,12 +42,6 @@ class iu_lambda:
 
     def __call__(self, *args, **kwargs):
         return self._key(*args, **kwargs)
-<<<<<<< HEAD
-
-=======
-                
-            
->>>>>>> c64174f (old update)
     def decompile_lambda(key, verbose=False):
         instructions = list(dis.get_instructions(key))
         if verbose: print([instr.opname for instr in instructions])
@@ -81,7 +61,6 @@ class iu_lambda:
                 match instr.opname:
                     case "RESUME":
                         continue
-<<<<<<< HEAD
                     case "COPY_FREE_VARS":
                         continue
                     case "LOAD_GLOBAL":
@@ -110,8 +89,6 @@ class iu_lambda:
                             vars_.add(str(var))
                         total_load_calls += 1
                         if verbose: print(f"Loaded {var} to STACK")
-=======
->>>>>>> c64174f (old update)
                     case "UNARY_INVERT":
                         STACK[-1] = "~"+STACK[-1]
                     case "UNARY_NEGATIVE":
@@ -129,7 +106,6 @@ class iu_lambda:
                         else:
                             index_path[-1] = subscript
 
-<<<<<<< HEAD
                     case "COMPARE_OP":
                         arg = instr.arg
                         cmp_ops = ('<', '<=', '==', '!=', '>', '>=', 'in', 'not in', 'is', 'is not', 'exception match', 'BAD')
@@ -736,10 +712,6 @@ class iu_lambda:
                     case "POP_JUMP_IF_NOT_NONE":
                         cond = STACK.pop(-1)
                         if verbose: print(f"Jump if {cond} is not None to offset {instr.arg}")
-=======
-                    case "RETURN_VALUE":
-                        return (STACK[-1], index_path, vars_, total_load_calls)
->>>>>>> c64174f (old update)
                     case _:
                         if instr.opname.startswith("CALL"):
                             args = []
@@ -750,7 +722,6 @@ class iu_lambda:
                         if instr.opname.startswith("BINARY_"):
                             #strip off "BINARY_"
                             opname = instr.opname[7:]
-<<<<<<< HEAD
                             # For Python 3.11+, BINARY_OP uses instr.arg (not instr.argval)
                             # Map arg to operator
                             ops_3_11 = {0: '+', 1: '&', 2: '//', 3: '<<', 4: '@', 5: '*', 6: '%', 7: '|', 8: '**', 9: '>>', 10: '-', 11: '/', 12: '^'}
@@ -769,20 +740,6 @@ class iu_lambda:
                             right = STACK.pop(-1)
                             if verbose: print(f"Operation completed: {STACK[-1]}{symbol_code}{right}")
                             STACK[-1] = STACK[-1] + symbol_code + right
-=======
-                            symbol_code = instr.argval
-                            # if older command, find matching symbol for name
-                            opnames = ("ADD", "AND", "FLOOR_DIVIDE", "LSHIFT", "MATRIX_MULTIPLY", "MULTIPLY", "MODULO", "OR", "POWER", "RSHIFT", "SUBTRACT", "TRUE_DIVIDE", "XOR")
-                            operators = ('+', '&', '//', '<<', '@', '*', '%', '|', '**', '>>', '-', '/', '^')
-                            ops = dict(zip(opnames,operators))
-                            if opname != "OP":
-                                symbol_code = ops.get(opname)
-                                if symbol_code is None:
-                                     raise ValueError(f"Unable to find binary operation {instr.opname}")
-                            if verbose: print(f"Operation completed: {STACK[-2]}{operators[symbol_code]}{STACK[-1]}")
-                            sum = STACK.pop(-2) + operators[symbol_code] + STACK.pop()
-                            STACK.append(sum)
->>>>>>> c64174f (old update)
 
                         elif instr.opname.startswith("BUILD_"):
                             if instr.opname.endswith("_EXTEND"):
@@ -841,10 +798,6 @@ class iu_lambda:
             else:
                 argval = instr.argval
             print(f"{(instr.opname+'  ('+str(instr.opcode)+')'):30}| arg={str(instr.arg):7} argval={argval}\n")
-<<<<<<< HEAD
-
-=======
->>>>>>> c64174f (old update)
 
 
 ################################################################################################################################
@@ -874,7 +827,6 @@ class iu_list(list):
             self.sorted = self.is_sorted(index)
 
     def __getitem__(self, index):
-<<<<<<< HEAD
         # Handle index paths like l[1,2,3] instead of l[1][2][3]
         if isinstance(index, tuple):
             if len(index) == 0:
@@ -894,13 +846,6 @@ class iu_list(list):
                 item = self._key(item)
             return item
 
-=======
-        item = super().__getitem__(index)
-        if self._apply_key is True:
-            item = self._key(item)
-        return item
-    
->>>>>>> c64174f (old update)
     def count(self, x, substring=False):
         total = 0
         for obj in self:
@@ -980,11 +925,7 @@ class iu_list(list):
         if not callable(key):
             key = self._key
         else:
-<<<<<<< HEAD
             self._key = iu_lambda(key)
-=======
-            self._key = key
->>>>>>> c64174f (old update)
 
         if reverse is not None:
             self.is_reversed = reverse
@@ -1031,13 +972,9 @@ class iu_list(list):
     def zip_with(self, iterable):
         self.clear()
         self.extend(iu_list(zip(self, iterable)))
-<<<<<<< HEAD
         
     def BFS_index(self, *args, **kwargs):
         return BFS_index(self, *args, **kwargs)
     
     def DFS_index(self, *args, **kwargs):
         return DFS_index(self, *args, **kwargs)
-=======
-        
->>>>>>> c64174f (old update)
