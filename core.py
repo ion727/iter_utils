@@ -26,9 +26,9 @@ class iu_lambda:
             self.total_load_calls = total_load_calls 
             self._key = eval(self._for_eval)
             
+
             self.can_assign_to_path = False
             self.can_get_from_path = False
-
             if len(self.vars_) == 1:
                 self.can_get_from_path = True
                 if total_load_calls == 1:
@@ -42,6 +42,8 @@ class iu_lambda:
 
     def __call__(self, *args, **kwargs):
         return self._key(*args, **kwargs)
+    
+    @staticmethod
     def decompile_lambda(key, verbose=False):
         instructions = list(dis.get_instructions(key))
         if verbose: print([instr.opname for instr in instructions])
