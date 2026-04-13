@@ -46,12 +46,19 @@ def is_sorted(iterable, i=..., *, is_reversed=None, key=None):
                 raise ValueError(f"Error: cannot accept negative index {i} exceeding list length {len(iterable)}")
             i = len(iterable) + i
         # key(...)*is_reversed first applies the key to retrieve the desired item, then flips the equality (or not) based on `is_reversed`` (-1 or 1)
-        return rkey(clamp(iterable, i-1)) <= rkey(iterable[i]) <= rkey(clamp(iterable, i+1))
+        try:
+            return rkey(clamp(iterable, i-1)) <= rkey(iterable[i]) <= rkey(clamp(iterable, i+1))
+        except TypeError:
+            return False
     else:
-        for index in range(len(iterable)-1):
-            if rkey(iterable[index]) > rkey(iterable[index+1]):
-                return False
-        return True
+        try:
+            for index in range(len(iterable)-1):
+                if rkey(iterable[index]) > rkey(iterable[index+1]):
+                    return False    
+        except TypeError:
+            return False
+        else:
+            return True
 
 def merge_sort(iterable, *, reverse=False, key=lambda x:x, visual=False):
     size = len(iterable)

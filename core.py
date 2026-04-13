@@ -805,7 +805,7 @@ class iu_lambda:
 
 
 class iu_list(list):
-    def __init__(self, iterable, replace_all=False):
+    def __init__(self, iterable=None, *, replace_all=False, mdata:dict=None):
         self._apply_key = False
         if replace_all:
             iterable = deep_replace(iterable, iu_list)
@@ -814,7 +814,7 @@ class iu_list(list):
         self.sorted = self.is_sorted()
         self.hash_history = set()
         self.current_hash = self.last_saved_hash = None
-        super().__init__(iterable)
+        super().__init__(iterable if iterable is not None else [])
 
     def __repr__(self):
         return f"iu_list({super().__repr__()})"
@@ -869,14 +869,14 @@ class iu_list(list):
     def append(self,x):
         self.current_hash = None
         super().append(x)
-        self.sorted = self.is_sorted(-1)
+        self.sorted = self.is_sorted(i=-1)
 
     def extend(self, iterable):
         self.current_hash = None
         pre_extend_length = len(self)
         super().extend(iterable)
         for i in range(len(iterable)):
-            if not self.is_sorted(pre_extend_length + i):
+            if not self.is_sorted(i=pre_extend_length + i):
                 self.sorted = False
                 break
         
