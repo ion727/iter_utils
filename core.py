@@ -19,7 +19,7 @@ class iu_lambda:
             if not is_lambda:
                 raise ValueError("iu_lambda(key")
 
-            decompilation = iu_lambda.decompile_lambda(key,verbose=False)
+            decompilation:dict = iu_lambda.decompile_lambda(key,verbose=False)
             if any(arg is None for arg in (decompilation.values())):
                 raise ValueError(f"An internal error occured: keys {[key for key in decompilation.keys() if decompilation[key] is None]} expected values, got None.")
             self.index_path = decompilation['index_path']
@@ -38,12 +38,10 @@ class iu_lambda:
                 # Can only assign to index path if exactly 1 variable is present
                 if self.total_load_calls == 1:
                     self.can_assign_to_path = True
+                    self.index_path = [eval(i) for i in self.index_path] 
                 # If incompatible, mark index_path as invalid:
                 else:
                     self.index_path = None
-            # Revert indices into their datatypes
-            if self.index_path is not None:
-                self.index_path = [eval(i) for i in self.index_path]    
 
     def __repr__(self):
         return f"iu_lambda(key={self._for_eval})"
@@ -122,7 +120,6 @@ class iu_lambda:
                         expr = r'''\[(.*)\]'''
                         search = re.search(expr, subscript)
                         if search is None or search.group(1) != index_path[-1]:
-                            print(subscript, search)
                             index_path.append(subscript)
                         # If found, replace the inner index with the outer index in index_path
                         else:
@@ -828,9 +825,6 @@ class iu_lambda:
             else:
                 argval = instr.argval
             print(f"{(instr.opname+'  ('+str(instr.opcode)+')'):30}| arg={str(instr.arg):7} argval={argval}\n")
-
-
-################################################################################################################################
 
 
 class iu_list(list):
