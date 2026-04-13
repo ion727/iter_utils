@@ -161,7 +161,6 @@ def BFS_index(iterable, target, start=0, end=None, *, exclude=None):
     
     raise ValueError(f"Value {target} not found in iterable.")
 
-
 def DFS_index(iterable, target, start=0, end=None, *, exclude=None):
     "Walks through iterable tree (including dicts and strings if target is 1 char) to find the first index of target value using depth-first search. "
     "Constrains search to start <= index <= end at the top level, excluding indexes in exclude list. Returns path with keys for dicts, indices for sequences."
@@ -238,3 +237,23 @@ def DFS_index(iterable, target, start=0, end=None, *, exclude=None):
         return result
     
     raise ValueError(f"Value {target} not found in iterable.")
+
+def deep_count(iterable, value, substring=False):
+    "Return the number of times <value> is can be found across the entire iterable tree."
+    def _dc_helper(iterable, value, substring=substring):
+        total = 0
+        for item in iterable:
+            if is_iterable(item, include_string=substring):
+                total += _dc_helper(item, value, substring)
+            else:
+                if item == value:
+                    total += 1
+        return total
+
+    if not is_iterable(iterable, include_string=substring):
+        raise ValueError(f"Object of type {type(iterable) is not iterable}")
+    
+    return _dc_helper(iterable, value, substring)
+
+        
+        

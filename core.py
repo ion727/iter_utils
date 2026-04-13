@@ -904,15 +904,8 @@ class iu_list(list):
             item = self._key(item)
         return item
 
-    def count(self, x, substring=False):
-        total = 0
-        for obj in self:
-            if not is_iterable(obj, include_string=substring):
-                if obj == x:
-                    total += 1
-                continue
-            total += obj.count(x)
-        return total
+    def deep_count(self, x, substring=False):
+        return deep_count(self, x, substring=substring)
 
     def reverse(self):
         self.current_hash = None

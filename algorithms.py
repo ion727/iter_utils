@@ -27,7 +27,6 @@ SearchObject(iterable={self.iterable},
              reverse={self.reverse}, 
              key={getsource(self.key)[27:]})"""
 
-
 def is_sorted(iterable, i=..., *, reversed=None, key=None):
     if not callable(key):
         key = iterable._key if hasattr(iterable, '_key') else lambda x:x
