@@ -10,12 +10,18 @@ def clamp(iterable, index):
 def is_iterable(obj, include_string=False):
     "Returns True if obj is an iterable, optionally accepting strings (rejected by default)"
     is_string = isinstance(obj, (str, bytes, bytearray)) 
-    return (isinstance(obj, Iterable) and not (is_string and include_string))
+    if is_string:
+        if include_string is True:
+            if len(obj) == 1:return False # a single character is not iterable
+            return True 
+        else:
+            return False
+    return isinstance(obj, Iterable)
 
 def deep_max(iterable, index=0, dtype=int):
     "Walks through iterable tree to find the highest value of type `dtype`, defaulting to <int>."
     if isinstance(dtype, tuple):
-        raise ValueError("Argument <dtype> expected singular type, got tuple.")
+        raise ValueError("Argument <dtype> expected non-iterable, got tuple.")
 
     left = iterable[index]
     if is_iterable(left, include_string=False):
