@@ -943,6 +943,8 @@ class iu_list(list):
         return self.current_hash
     
     def clear_hashes(self):
+        self.last_saved_hash = None
+        self.current_hash = None
         self.hash_history.clear()
 
     def save_current_hash(self):
