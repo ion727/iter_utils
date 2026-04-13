@@ -1,4 +1,4 @@
 iu_list.apply(func)         | just like map() but automated
 iu_list.apply_deep(func)    | scans through children to find any function that func can be applied to
 
-add deep_count
+add `set` to replace everything
