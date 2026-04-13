@@ -910,11 +910,11 @@ class iu_list(list):
     def len(self):
         return super().__len__()
 
-    def get_from_clamped(self, index):
+    def clamp_index(self, index):
         return self[clamp(self,index)]
 
-    def is_sorted(self, i=..., *, reverse=None, key=None):
-        return is_sorted(self, i, reverse=reverse, key=key)
+    def is_sorted(self, i=..., *, is_reversed=None, key=None):
+        return is_sorted(self, i, is_reversed=is_reversed, key=key)
 
     def merge_sort(self, *, reverse=False, key=lambda x:x, visual=True):
         # check bytecode of keys to check for similarity & bypass

@@ -1,5 +1,8 @@
 from inspect import getsource
-
+try:
+    from .utils import *
+except ImportError:
+    from utils import *
 
 class SearchObject:
     def __init__(self, iterable=None, target=None, found=None, occurences=0, floor=None, ceil=None, sorted=None, reverse=None, key=None):
@@ -25,14 +28,15 @@ SearchObject(iterable={self.iterable},
              key={getsource(self.key)[27:]})"""
 
 
-def is_sorted(iterable, i=..., *, reverse=None, key=None):
+def is_sorted(iterable, i=..., *, is_reversed=None, key=None):
     if not callable(key):
-        key = iterable._key
+        key = iterable._key if hasattr(iterable, '_key') else lambda x:x
+
     # check surrounding the index (i) to ensure they are still sorted
-    if reverse is None:
-         reverse = iterable.is_reversed
-    reverse = -1 if reverse else 1
-    rkey = lambda x: reverse*key(x)
+    if is_reversed is None:
+        is_reversed = iterable.is_reversed if hasattr(iterable, 'is_reversed') else False
+    is_reversed = -1 if is_reversed else 1
+    rkey = lambda x: is_reversed*key(x)
     
     if i is not ...:
         if type(i) is not int:
@@ -41,8 +45,8 @@ def is_sorted(iterable, i=..., *, reverse=None, key=None):
             if i < -len(iterable):
                 raise ValueError(f"Error: cannot accept negative index {i} exceeding list length {len(iterable)}")
             i = len(iterable) + i
-        # key(...)*reverse first applies the key to retrieve the desired item, then flips the equality (or not) based on `reverse`` (-1 or 1)
-        return rkey(iterable.clamp_index(i-1)) <= rkey(iterable[i]) <= rkey(iterable.clamp_index(i+1))
+        # key(...)*is_reversed first applies the key to retrieve the desired item, then flips the equality (or not) based on `is_reversed`` (-1 or 1)
+        return rkey(clamp(iterable, i-1)) <= rkey(iterable[i]) <= rkey(clamp(iterable, i+1))
     else:
         for index in range(len(iterable)-1):
             if rkey(iterable[index]) > rkey(iterable[index+1]):
