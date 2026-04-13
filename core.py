@@ -954,12 +954,13 @@ class iu_list(list):
         self.last_saved_hash = self.current_hash
         self.hash_history.add(self.current_hash)
 
-    def set_key(self, key, *, sort=True):
+    def set_key(self, key):
         if not isinstance(key, (iu_lambda, types.LambdaType)):
-            raise ValueError("iu_list.set_key(key): argument 'key' must be of type <iu_lambda> or <lambda>")
+            if callable(key):
+                key = iu_lambda(lambda x: key(x))
+            else:
+                raise ValueError("iu_list.set_key(key): argument 'key' must be of type <iu_lambda> or <lambda>")
         self._key = key if isinstance(key, iu_lambda) else iu_lambda(key)
-        if sort:
-            self.sort()
 
     def activate_key(self):
         self._apply_key = True
@@ -973,7 +974,7 @@ class iu_list(list):
     def zip_with(self, iterable):
         self.clear()
         self.extend(iu_list(zip(self, iterable)))
-        
+            
     def BFS_index(self, *args, **kwargs):
         return BFS_index(self, *args, **kwargs)
     
