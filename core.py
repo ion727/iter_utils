@@ -972,8 +972,9 @@ class iu_list(list):
         return iu_list([self._key(item) for item in self])
 
     def zip_with(self, iterable):
+        temp=iu_list(zip(self, iterable))
         self.clear()
-        self.extend(iu_list(zip(self, iterable)))
+        self.extend(temp)
             
     def BFS_index(self, *args, **kwargs):
         return BFS_index(self, *args, **kwargs)
