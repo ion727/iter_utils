@@ -832,20 +832,20 @@ class iu_list(list):
         if isinstance(index, tuple):
             if len(index) == 0:
                 raise IndexError("tuple index out of range")
+            if len(index) == 1:
+                index = index[0] # allow for tuples to be passed, e.g. l[(1,2)] instead of l[1,2]
+            if any(is_iterable(i, include_string=False) for i in index):
+                raise IndexError("Nested iterables are not allowed in index paths")
             
-            # Start with the first index
-            current = self
-            
-            # Apply remaining indices recursively
+            # Start with the first index then apply remaining indices recursively
+            item = self
             for idx in index:
-                current = current[idx]
-            
-            return current
+                item = item[idx]
         else:
             item = super().__getitem__(index)
-            if self._apply_key is True:
-                item = self._key(item)
-            return item
+        if self._apply_key is True and self._key.can_get_from_path is True:
+            item = self._key(item)
+        return item
 
     def count(self, x, substring=False):
         total = 0
