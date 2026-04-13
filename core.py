@@ -19,9 +19,9 @@ class iu_lambda:
             formula, index_path, vars_, total_load_calls = iu_lambda.decompile_lambda(key,verbose=False) if is_lambda else (None, None, None, None)
             if any(arg is None for arg in (formula, index_path, vars_, total_load_calls)):
                 raise ValueError("Invalid arguments for custom iu_lambda")
-            self._for_eval = f"lambda {','.join(vars_)}: {formula}"
-            self.formula = formula
-            self.index_path = tuple(index_path)
+            self.formula = f"{','.join(vars_)}: {formula}"
+            self._for_eval = "lambda " + self.formula
+            self.index_path = tuple([int(i) for i in index_path])
             self.vars_ = vars_
             self.total_load_calls = total_load_calls 
             self._key = eval(self._for_eval)
@@ -102,12 +102,11 @@ class iu_lambda:
                         subscript = STACK.pop()
                         expr = r'''\[(.*)\]'''
                         search = re.search(expr, subscript)
-                        print(subscript, search, index_path)
+                        if verbose: print(subscript, search, index_path)
                         if search is None or search.group(1) != index_path[-1]:
                             index_path.append(subscript)
                         else:
                             index_path[-1] = subscript
-
                     case "COMPARE_OP":
                         arg = instr.arg
                         cmp_ops = ('<', '<=', '==', '!=', '>', '>=', 'in', 'not in', 'is', 'is not', 'exception match', 'BAD')
