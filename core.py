@@ -939,6 +939,9 @@ class iu_list(list):
         super().insert(index, x)
         self.sorted = self.is_sorted(index)
 
+    def copy(self):
+        return iu_list(super().copy())
+
     def sort(self, *, reverse=None, key=None):
         # check if list already sorted
         if self.sorted and iu_lambda(key).formula==self._key.formula:
