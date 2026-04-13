@@ -39,9 +39,9 @@ class iu_lambda:
                 if self.total_load_calls == 1:
                     self.can_assign_to_path = True
                     self.index_path = [eval(i) for i in self.index_path] 
-                # If incompatible, mark index_path as invalid:
-                else:
-                    self.index_path = None
+            # If incompatible, mark index_path as invalid:
+            else:
+                self.index_path = None      
 
     def __repr__(self):
         return f"iu_lambda(key={self._for_eval})"
@@ -842,13 +842,44 @@ class iu_list(list):
     def __repr__(self):
         return f"iu_list({super().__repr__()})"
 
-    def __setitem__(self,index,value):
+    def __setitem__(self,indexes,value):
         self.current_hash = None
-        if self._apply_key:
-            pass
-        super().__setitem__(index,value)
-        if self.sorted:
-            self.sorted = self.is_sorted(index)
+        if isinstance(indexes, tuple):
+            if len(indexes) == 0:
+                raise IndexError("tuple indexes out of range")
+            if len(indexes) == 1:
+                indexes = indexes[0] # unpack iterables if necessary
+            if any(is_iterable(i, include_string=False) for i in indexes):
+                raise IndexError("Nested iterables are not allowed in indexes paths")
+        indexes = (indexes,)
+        
+        # Start with the first index then apply remaining indices recursively
+        item = self
+        # Check for key aplication
+        index_path = indexes
+        if self._apply_key is True:
+            if self._key.can_assign_to_path is not True:
+                raise ValueError(f"Attempted assignment using incompatible active key {self._key}.\nTo assign to this object, first deactivate the key using <list>.deactivate_key()")
+            index_path = index_path + tuple(self._key.index_path)
+            # temporarily deactivate key to avoid infinite recursion when applying key to path
+            self.deactivate_key()
+            reactivate_key = True
+        else:
+            reactivate_key = False 
+
+        # Recursively traverse index path until the final iterable is reached, then set the value at the final index
+        if len(index_path) >= 2:
+            for k in index_path[:-1]:
+                item = item[k]
+        list.__setitem__(item, index_path[-1], value)
+            
+        # Only check sorted status if modifying at top level (single index)
+        if len(indexes) == 1 and self.sorted:
+            self.sorted = is_sorted(item)
+        
+        # Reactivate key if it was temporarily deactivated
+        if reactivate_key:
+            self.activate_key()
 
     def __getitem__(self, index):
         # Handle index paths like l[1,2,3] instead of l[1][2][3]
