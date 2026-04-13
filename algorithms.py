@@ -28,15 +28,15 @@ SearchObject(iterable={self.iterable},
              key={getsource(self.key)[27:]})"""
 
 
-def is_sorted(iterable, i=..., *, is_reversed=None, key=None):
+def is_sorted(iterable, i=..., *, reversed=None, key=None):
     if not callable(key):
         key = iterable._key if hasattr(iterable, '_key') else lambda x:x
 
     # check surrounding the index (i) to ensure they are still sorted
-    if is_reversed is None:
-        is_reversed = iterable.is_reversed if hasattr(iterable, 'is_reversed') else False
-    is_reversed = -1 if is_reversed else 1
-    rkey = lambda x: is_reversed*key(x)
+    if reversed is None:
+        reversed = iterable.reversed if hasattr(iterable, 'reversed') else False
+    reversed = -1 if reversed else 1
+    rkey = lambda x: reversed*key(x)
     
     if i is not ...:
         if type(i) is not int:
@@ -45,7 +45,7 @@ def is_sorted(iterable, i=..., *, is_reversed=None, key=None):
             if i < -len(iterable):
                 raise ValueError(f"Error: cannot accept negative index {i} exceeding list length {len(iterable)}")
             i = len(iterable) + i
-        # key(...)*is_reversed first applies the key to retrieve the desired item, then flips the equality (or not) based on `is_reversed`` (-1 or 1)
+        # key(...)*reversed first applies the key to retrieve the desired item, then flips the equality (or not) based on `reversed`` (-1 or 1)
         try:
             return rkey(clamp(iterable, i-1)) <= rkey(iterable[i]) <= rkey(clamp(iterable, i+1))
         except TypeError:
@@ -94,15 +94,15 @@ def binary_search(iterable, target, *, reverse=None, key=None, override_sorted=F
                             target=target, 
                             found=False, 
                             sorted=not override_sorted, 
-                            reverse=iterable.is_reversed)
+                            reverse=iterable.reversed)
     
     found = False
     occurences = 0
 
     # check whether the list is sorted in reverse or not
     if reverse is not None:
-        iterable.is_reversed = reverse
-    rev = -1 if iterable.is_reversed else 1
+        iterable.reversed = reverse
+    rev = -1 if iterable.reversed else 1
 
     # retrieve the sorting key
     if not callable(key):
@@ -156,5 +156,5 @@ def binary_search(iterable, target, *, reverse=None, key=None, override_sorted=F
                         floor=lwr_bound, 
                         ceil=upr_bound, 
                         sorted=not override_sorted, 
-                        reverse=iterable.is_reversed,
+                        reverse=iterable.reversed,
                         key=key)

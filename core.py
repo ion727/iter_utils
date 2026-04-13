@@ -831,12 +831,15 @@ class iu_list(list):
     def __init__(self, iterable=None, *, replace_all=False, mdata:dict=None):
         if replace_all:
             iterable = deep_dtype(iterable, iu_list)
-        self._apply_key = False
-        self.is_reversed = False
-        self._key = iu_lambda(lambda x:x)
-        self.sorted = self.is_sorted()
-        self.hash_history = set()
-        self.current_hash = self.last_saved_hash = None
+        if mdata is not None:
+            self._set_mdata(mdata)
+        else:
+            self._apply_key = False
+            self.reversed = False
+            self._key = iu_lambda(lambda x:x)
+            self.sorted = self.is_sorted()
+            self.hash_history = set()
+            self.current_hash = self.last_saved_hash = None
         super().__init__(iterable if iterable is not None else [])
 
     def __repr__(self):
@@ -911,13 +914,10 @@ class iu_list(list):
             total += obj.count(x)
         return total
 
-    def Type(self):
-        return type(self)
-
     def reverse(self):
         self.current_hash = None
         super().reverse()
-        self.is_reversed = not self.is_reversed
+        self.reversed = not self.reversed
         return self
 
     def append(self,x):
@@ -940,7 +940,27 @@ class iu_list(list):
         self.sorted = self.is_sorted(index)
 
     def copy(self):
-        return iu_list(super().copy())
+        new = iu_list(super().copy())
+        new._set_mdata(self.mdata)
+        return new
+    
+    @property
+    def mdata(self):
+        return {'_apply_key'    : self._apply_key,
+                'reversed'      : self.reversed,
+                '_key'          : self._key,
+                'sorted'        : self.sorted,
+                'hash_history'  : self.hash_history,
+                'current_hash'  : self.current_hash
+                }
+
+    def _set_mdata(self, mdata):
+        self._apply_key = mdata['_apply_key']  
+        self.reversed = mdata['reversed']    
+        self._key = mdata['_key']        
+        self.sorted = mdata['sorted']      
+        self.hash_history = mdata['hash_history']
+        self.current_hash = mdata['current_hash']
 
     def sort(self, *, reverse=None, key=None):
         # check if list already sorted
@@ -955,8 +975,8 @@ class iu_list(list):
         if not callable(key):
             key = self._key
         if reverse is not None:
-            self.is_reversed = reverse
-        super().sort(key=key, reverse=self.is_reversed)
+            self.reversed = reverse
+        super().sort(key=key, reverse=self.reversed)
         self.sorted = True
         return self
 
@@ -973,8 +993,8 @@ class iu_list(list):
                 self._key = iu_lambda(key)
 
             if reverse is not None:
-                self.is_reversed = reverse
-            reverse = -1 if self.is_reversed else 1
+                self.reversed = reverse
+            reverse = -1 if self.reversed else 1
             
             iterable = merge_sort(self, reverse=reverse, key=key, visual=visual)
             self.sorted = True
@@ -989,8 +1009,8 @@ class iu_list(list):
     def clamp_index(self, index):
         return self[clamp(self,index)]
 
-    def is_sorted(self, i=..., *, is_reversed=None, key=None):
-        return is_sorted(self, i, is_reversed=is_reversed, key=key)
+    def is_sorted(self, i=..., *, reversed=None, key=None):
+        return is_sorted(self, i, reversed=reversed, key=key)
 
     def binary_search(self, target, *, reverse=None, key=None, override_sorted=False):
         return binary_search(self, target, reverse=reverse, key=key, override_sorted=override_sorted)
