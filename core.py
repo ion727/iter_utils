@@ -9,30 +9,41 @@ import types
 import re
 
 class iu_lambda:
-    def __init__(self, key=None, /, *, formula=None, index_path=None, vars_=None, total_load_calls=None):
+    def __init__(self, key=None):
         if isinstance(key, iu_lambda):
             # Copy all attributes from item to self using get_attributes
             for attr, value in get_attributes(key).items():
                 setattr(self, attr, value)
         else:
             is_lambda = isinstance(key, types.LambdaType) and key.__name__ == "<lambda>"
-            formula, index_path, vars_, total_load_calls = iu_lambda.decompile_lambda(key,verbose=False) if is_lambda else (None, None, None, None)
-            if any(arg is None for arg in (formula, index_path, vars_, total_load_calls)):
-                raise ValueError("Invalid arguments for custom iu_lambda")
-            self.formula = f"{','.join(vars_)}: {formula}"
+            if not is_lambda:
+                raise ValueError("iu_lambda(key")
+
+            decompilation = iu_lambda.decompile_lambda(key,verbose=False)
+            if any(arg is None for arg in (decompilation.values())):
+                raise ValueError(f"An internal error occured: keys {[key for key in decompilation.keys() if decompilation[key] is None]} expected values, got None.")
+            self.index_path = decompilation['index_path']
+            self.vars_ = decompilation['vars_']
+            self.total_load_calls = decompilation['total_load_calls']
+            self.formula = f"{','.join(self.vars_)}: {decompilation['formula']}"
             self._for_eval = "lambda " + self.formula
-            self.index_path = tuple([int(i) for i in index_path])
-            self.vars_ = vars_
-            self.total_load_calls = total_load_calls 
             self._key = eval(self._for_eval)
             
-
+            # Verify that indexing operations are compatible with key
             self.can_assign_to_path = False
             self.can_get_from_path = False
             if len(self.vars_) == 1:
                 self.can_get_from_path = True
-                if total_load_calls == 1:
+                
+                # Can only assign to index path if exactly 1 variable is present
+                if self.total_load_calls == 1:
                     self.can_assign_to_path = True
+                # If incompatible, mark index_path as invalid:
+                else:
+                    self.index_path = None
+            # Revert indices into their datatypes
+            if self.index_path is not None:
+                self.index_path = [eval(i) for i in self.index_path]    
 
     def __repr__(self):
         return f"iu_lambda(key={self._for_eval})"
@@ -44,12 +55,14 @@ class iu_lambda:
         return self._key(*args, **kwargs)
     
     @staticmethod
-    def decompile_lambda(key, verbose=False):
+    def decompile_lambda(key, verbose=False) -> dict:
+        if type(key) is iu_lambda:
+            key = key._key
         instructions = list(dis.get_instructions(key))
         if verbose: print([instr.opname for instr in instructions])
         RETURN = instructions[-1].opname
         if RETURN.endswith("CONST"):
-            return str(RETURN.argval)
+            return {'formula':str(RETURN.argval),'index_path':None, 'vars_':None, 'total_load_calls':0}
         elif RETURN.endswith("VALUE"):
             if verbose: print("Start loop!!")
             i=0
@@ -82,7 +95,11 @@ class iu_lambda:
                         STACK.append(f"deref_{instr.argval}")
                         total_load_calls += 1
                     case "LOAD_CONST":
-                        STACK.append(str(instr.argval))
+                        const = instr.argval
+                        if type(const) is str:
+                            STACK.append(f"'{const}'")
+                        else:
+                            STACK.append(str(instr.argval))
                         if verbose: print(f"Loaded {instr.argval} to STACK")
                     case "LOAD_FAST":
                         var = instr.argval
@@ -98,15 +115,19 @@ class iu_lambda:
                     case "UNARY_NOT":
                         STACK[-1] = "not "+STACK[-1]
                     case "BINARY_SUBSCR":
-                        STACK[-2] = f"{STACK[-2]}[{STACK[-1]}]"
                         subscript = STACK.pop()
+                        if verbose: print(f'Applying subscript {subscript} to {STACK[-1]}')
+                        STACK[-1] = f"{STACK[-1]}[{subscript}]"
+                        # Scan for nested indices
                         expr = r'''\[(.*)\]'''
                         search = re.search(expr, subscript)
-                        if verbose: print(subscript, search, index_path)
                         if search is None or search.group(1) != index_path[-1]:
+                            print(subscript, search)
                             index_path.append(subscript)
+                        # If found, replace the inner index with the outer index in index_path
                         else:
                             index_path[-1] = subscript
+                        if verbose: print(f"Updated index path: {index_path}")
                     case "COMPARE_OP":
                         arg = instr.arg
                         cmp_ops = ('<', '<=', '==', '!=', '>', '>=', 'in', 'not in', 'is', 'is not', 'exception match', 'BAD')
@@ -137,7 +158,11 @@ class iu_lambda:
                     case "ROT_TWO":
                         STACK[-1], STACK[-2] = STACK[-2], STACK[-1]
                     case "RETURN_VALUE":
-                        return (STACK[-1], index_path, vars_, total_load_calls)
+                        return {'formula':STACK[-1],
+                                'index_path':index_path, 
+                                'vars_':vars_, 
+                                'total_load_calls':total_load_calls
+                                }
                     case "MAKE_FUNCTION":
                         flags = instr.arg
                         defaults = None
@@ -595,7 +620,11 @@ class iu_lambda:
                     case "INSTRUMENTED_RESUME":
                         continue
                     case "INSTRUMENTED_RETURN_VALUE":
-                        return (STACK[-1], index_path, vars_, total_load_calls)
+                        return {'formula':STACK[-1],
+                                'index_path':index_path, 
+                                'vars_':vars_, 
+                                'total_load_calls':total_load_calls
+                                }
                     case "INSTRUMENTED_CALL_FUNCTION_EX":
                         flags = instr.arg
                         if flags & 0x02:
