@@ -57,13 +57,13 @@ def deep_min(iterable, index=0, dtype=int):
 
     return min(left, right)
 
-def deep_replace(iterable, target_type):
+def deep_dtype(iterable, target_type):
     if isinstance(iterable, dict):
         iterable = iterable.items()
     iterable = list(iterable)
     for index, item in enumerate(iterable):
         if is_iterable(item, include_string=False):
-            iterable[index] = deep_replace(item, target_type)
+            iterable[index] = deep_dtype(item, target_type)
     return target_type(iterable)
 
 def get_attributes(obj):

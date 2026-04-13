@@ -829,9 +829,9 @@ class iu_lambda:
 
 class iu_list(list):
     def __init__(self, iterable=None, *, replace_all=False, mdata:dict=None):
-        self._apply_key = False
         if replace_all:
-            iterable = deep_replace(iterable, iu_list)
+            iterable = deep_dtype(iterable, iu_list)
+        self._apply_key = False
         self.is_reversed = False
         self._key = iu_lambda(lambda x:x)
         self.sorted = self.is_sorted()
@@ -960,6 +960,28 @@ class iu_list(list):
         self.sorted = True
         return self
 
+    def merge_sort(self, *, reverse=False, key=lambda x:x, visual=True):
+            # check bytecode of keys to check for similarity & bypass
+            if self.sorted and iu_lambda(key).formula==self._key.formula:
+                if reverse:
+                    self.reverse()
+                return self
+
+            if not callable(key):
+                key = self._key
+            else:
+                self._key = iu_lambda(key)
+
+            if reverse is not None:
+                self.is_reversed = reverse
+            reverse = -1 if self.is_reversed else 1
+            
+            iterable = merge_sort(self, reverse=reverse, key=key, visual=visual)
+            self.sorted = True
+            self.clear()
+            self.extend(iterable)
+            return self
+
     @property
     def len(self):
         return super().__len__()
@@ -969,28 +991,6 @@ class iu_list(list):
 
     def is_sorted(self, i=..., *, is_reversed=None, key=None):
         return is_sorted(self, i, is_reversed=is_reversed, key=key)
-
-    def merge_sort(self, *, reverse=False, key=lambda x:x, visual=True):
-        # check bytecode of keys to check for similarity & bypass
-        if self.sorted and iu_lambda(key).formula==self._key.formula:
-            if reverse:
-                self.reverse()
-            return self
-
-        if not callable(key):
-            key = self._key
-        else:
-            self._key = iu_lambda(key)
-
-        if reverse is not None:
-            self.is_reversed = reverse
-        reverse = -1 if self.is_reversed else 1
-        
-        iterable = merge_sort(self, reverse=reverse, key=key, visual=visual)
-        self.sorted = True
-        self.clear()
-        self.extend(iterable)
-        return self
 
     def binary_search(self, target, *, reverse=None, key=None, override_sorted=False):
         return binary_search(self, target, reverse=reverse, key=key, override_sorted=override_sorted)
