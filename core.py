@@ -886,16 +886,13 @@ class iu_list(list):
         self.sorted = self.is_sorted(index)
 
     def sort(self, *, reverse=None, key=None):
-        
         # check if list already sorted
         if self.sorted and iu_lambda(key).formula==self._key.formula:
             # list is sorted so simply check reverse
             if reverse:
                 self.reverse()
                 self.current_hash = None
-            print("bypassed!!")
             return self
-
 
         self.current_hash = None
         if not callable(key):
