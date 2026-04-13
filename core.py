@@ -946,9 +946,7 @@ class iu_list(list):
         self.hash_history.clear()
 
     def save_current_hash(self):
-        if self.current_hash is None:
-            hash(self)
-        self.last_saved_hash = self.current_hash
+        self.last_saved_hash = hash(self)
         self.hash_history.add(self.current_hash)
 
     def set_key(self, key):
@@ -968,7 +966,7 @@ class iu_list(list):
     def with_key_applied(self):
         return iu_list([self._key(item) for item in self])
 
-    def zip_with(self, iterable):
+    def zipped_with(self, iterable):
         temp=iu_list(zip(self, iterable))
         self.clear()
         self.extend(temp)
