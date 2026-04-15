@@ -923,6 +923,8 @@ class iu_list(list):
         self.current_hash = None
         pre_extend_length = len(self)
         super().extend(iterable)
+        if not hasattr(iterable, "__len__"):
+            iterable = tuple(iterable)
         for i in range(len(iterable)):
             if not self.is_sorted(i=pre_extend_length + i):
                 self.sorted = False
@@ -991,10 +993,6 @@ class iu_list(list):
             self.extend(iterable)
             return self
 
-    @property
-    def len(self):
-        return super().__len__()
-
     def clamp_index(self, index):
         return self[clamp(self,index)]
 
@@ -1032,15 +1030,21 @@ class iu_list(list):
         self._apply_key = False
 
     def with_key_applied(self):
-        return iu_list([self._key(item) for item in self])
+        return mapped(self._key, self)
 
     def zipped_with(self, iterable):
-        temp=iu_list(zip(self, iterable))
-        self.clear()
-        self.extend(temp)
-            
+        self.set_items(iu_list(zip(self, iterable)))
+        
+
+    def apply_map(self, func):
+        self.set_items(mapped(func, self))
+
     def BFS_index(self, *args, **kwargs):
         return BFS_index(self, *args, **kwargs)
     
     def DFS_index(self, *args, **kwargs):
         return DFS_index(self, *args, **kwargs)
+
+    @property
+    def len(self):
+        return super().__len__()

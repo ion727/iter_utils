@@ -255,5 +255,10 @@ def deep_count(iterable, value, substring=False):
     
     return _dc_helper(iterable, value, substring)
 
-        
+def mapped(func, iterable):
+    if not callable(func):
+        raise TypeError(f"'{type(iterable)}' object is not callable")
+    if not is_iterable(iterable, include_string=False):
+        raise TypeError(f"'{type(iterable)}' object is not iterable")
+    return type(iterable)(map(func, iterable))
         
