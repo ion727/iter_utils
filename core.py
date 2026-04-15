@@ -8,6 +8,7 @@ import dis
 import types
 import re
 
+
 class iu_lambda:
     def __init__(self, key=None):
         if isinstance(key, iu_lambda):
@@ -832,7 +833,7 @@ class iu_list(list):
         if replace_all:
             iterable = deep_dtype(iterable, iu_list)
         if mdata is not None:
-            self._set_mdata(mdata)
+            self.set_mdata(mdata)
         else:
             self._apply_key = False
             self.reversed = False
@@ -862,7 +863,7 @@ class iu_list(list):
         index_path = indexes
         if self._apply_key is True:
             if self._key.can_assign_to_path is not True:
-                raise ValueError(f"Attempted assignment using incompatible active key {self._key}.\nTo assign to this object, first deactivate the key using <list>.deactivate_key()")
+                raise ValueError(f"Attempted assignment using incompatible active key {self._key}.\nTo assign to this object, first deactivate the key using <obj>.deactivate_key()")
             index_path = index_path + tuple(self._key.index_path)
             # temporarily deactivate key to avoid infinite recursion when applying key to path
             self.deactivate_key()
@@ -934,26 +935,21 @@ class iu_list(list):
 
     def copy(self):
         new = iu_list(super().copy())
-        new._set_mdata(self.mdata)
+        new.set_mdata(vars(self))
         return new
-    
-    @property
-    def mdata(self):
-        return {'_apply_key'    : self._apply_key,
-                'reversed'      : self.reversed,
-                '_key'          : self._key,
-                'sorted'        : self.sorted,
-                'hash_history'  : self.hash_history,
-                'current_hash'  : self.current_hash
-                }
 
-    def _set_mdata(self, mdata):
+    def set_mdata(self, mdata):
         self._apply_key = mdata['_apply_key']  
         self.reversed = mdata['reversed']    
         self._key = mdata['_key']        
         self.sorted = mdata['sorted']      
         self.hash_history = mdata['hash_history']
         self.current_hash = mdata['current_hash']
+        self.last_saved_hash = mdata['last_saved_hash']
+
+    def set_items(self, iterable):
+        self.clear()
+        self.extend(iterable)
 
     def sort(self, *, reverse=None, key=None):
         # check if list already sorted
